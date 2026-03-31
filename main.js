@@ -16,11 +16,24 @@ const createPageLoader = () => {
 const loader = createPageLoader();
 
 // Handle page entry (Fade Out)
-window.addEventListener('load', () => {
-  setTimeout(() => {
+const fadeOutLoader = () => {
+  if (loader) {
     loader.classList.add('fade-out');
-  }, 300);
+    document.body.style.overflow = ''; // Ensure body is scrollable
+  }
+};
+
+// Initial state: prevent scroll while loader is essentially visible
+document.body.style.overflow = 'hidden';
+
+// Faster entry: Try to fade out as soon as DOM is ready, 
+// but give it a tiny buffer for a smooth premium feel.
+window.addEventListener('DOMContentLoaded', () => {
+  setTimeout(fadeOutLoader, 300);
 });
+
+// Fallback for safety - if DOMContentLoaded already fired or for older browsers
+window.addEventListener('load', fadeOutLoader);
 
 // Intercept clicks for internal navigation (Fade In)
 document.addEventListener('click', (e) => {
@@ -30,17 +43,17 @@ document.addEventListener('click', (e) => {
   const href = link.getAttribute('href');
   
   // Only intercept internal page links, skip hashes or externals
-  if (href && (href.endsWith('.html') || href.startsWith('./')) && !href.startsWith('#')) {
+  if (href && (href.endsWith('.html') || (href.includes('.html') && !href.startsWith('http'))) && !href.startsWith('#')) {
     e.preventDefault();
     loader.classList.remove('fade-out');
     loader.classList.add('active');
     
+    // Lock scroll during transition for premium feel
+    document.body.style.overflow = 'hidden';
+    
     // Close mobile menu if open
     if (menuBtn) menuBtn.classList.remove('active');
-    if (mobileOverlay) {
-      mobileOverlay.classList.remove('active');
-      document.body.style.overflow = '';
-    }
+    if (mobileOverlay) mobileOverlay.classList.remove('active');
     
     setTimeout(() => {
       window.location.href = href;
